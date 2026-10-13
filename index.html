@@ -1,0 +1,135 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Junoon Camera Test</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 520px;
+      margin: 24px auto;
+      padding: 16px;
+      text-align: center;
+      background: #f5f7fb;
+    }
+    h1 { font-size: 25px; }
+    video, canvas, img {
+      width: 100%;
+      max-height: 65vh;
+      object-fit: cover;
+      border-radius: 14px;
+      background: #222;
+    }
+    button {
+      width: 100%;
+      padding: 15px;
+      margin-top: 12px;
+      border: 0;
+      border-radius: 10px;
+      background: #1769e0;
+      color: white;
+      font-size: 17px;
+      cursor: pointer;
+    }
+    button:disabled { opacity: .5; }
+    #message { margin: 16px 0; }
+  </style>
+</head>
+<body>
+  <h1>Junoon Camera Test</h1>
+  <p>Allow camera access when your browser asks.</p>
+
+  <video id="video" autoplay playsinline muted></video>
+  <canvas id="canvas" hidden></canvas>
+  <img id="photo" hidden alt="Captured selfie">
+
+  <button id="openButton">Open Camera</button>
+  <button id="captureButton" disabled>Capture Selfie</button>
+  <button id="retakeButton" hidden>Retake Selfie</button>
+  <p id="message">Camera not started.</p>
+
+  <script>
+    const video = document.getElementById('video');
+    const canvas = document.getElementById('canvas');
+    const photo = document.getElementById('photo');
+    const message = document.getElementById('message');
+    const openButton = document.getElementById('openButton');
+    const captureButton = document.getElementById('captureButton');
+    const retakeButton = document.getElementById('retakeButton');
+
+    let stream = null;
+
+    function stopCamera() {
+      if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+        stream = null;
+      }
+      video.srcObject = null;
+      captureButton.disabled = true;
+    }
+
+    openButton.addEventListener('click', async () => {
+      try {
+        stopCamera();
+        message.textContent = 'Requesting camera permission...';
+
+        if (!navigator.mediaDevices ||
+            !navigator.mediaDevices.getUserMedia) {
+          throw new Error(
+            'Camera API unavailable. Open this page using HTTPS in a browser.'
+          );
+        }
+
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: { ideal: 'user' } },
+          audio: false
+        });
+
+        video.srcObject = stream;
+        await video.play();
+
+        video.hidden = false;
+        photo.hidden = true;
+        captureButton.disabled = false;
+        captureButton.hidden = false;
+        retakeButton.hidden = true;
+        message.textContent = 'Camera is working!';
+      } catch (error) {
+        message.textContent =
+          'Camera error: ' + error.name + ' — ' + error.message;
+        stopCamera();
+      }
+    });
+
+    captureButton.addEventListener('click', () => {
+      if (!video.videoWidth) {
+        message.textContent = 'Camera is not ready yet. Try again.';
+        return;
+      }
+
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      canvas.getContext('2d').drawImage(
+        video, 0, 0, canvas.width, canvas.height
+      );
+
+      photo.src = canvas.toDataURL('image/jpeg', 0.85);
+      photo.hidden = false;
+      video.hidden = true;
+      stopCamera();
+      captureButton.hidden = true;
+      retakeButton.hidden = false;
+      message.textContent = 'Selfie captured successfully.';
+    });
+
+    retakeButton.addEventListener('click', () => {
+      photo.hidden = true;
+      openButton.click();
+    });
+
+    window.addEventListener('pagehide', stopCamera);
+  </script>
+</body>
+</html>
