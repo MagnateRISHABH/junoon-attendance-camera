@@ -7,47 +7,80 @@
   <title>Junoon Attendance</title>
 
   <style>
-    * { box-sizing: border-box; }
+    * {
+      box-sizing: border-box;
+    }
 
     body {
-      font-family: Arial, sans-serif;
-      background: #f4f6f8;
       margin: 0;
+      min-height: 100vh;
+      font-family: Arial, sans-serif;
+      background:
+        linear-gradient(rgba(0, 0, 0, 0.35), rgba(0, 0, 0, 0.35)),
+        url("./attendance-bg.webp") center / cover fixed no-repeat;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       padding: 20px;
-      color: #222;
     }
 
     .card {
-      max-width: 460px;
-      margin: 20px auto;
-      background: white;
-      padding: 24px;
-      border-radius: 16px;
-      box-shadow: 0 3px 15px #0001;
+      width: 100%;
+      max-width: 430px;
+      padding: 26px;
+      background: rgba(255, 255, 255, 0.96);
+      border-radius: 18px;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
     }
 
-    h1 { text-align: center; font-size: 25px; }
+    h1 {
+      margin: 0 0 8px;
+      text-align: center;
+      font-size: 27px;
+      color: #222;
+    }
+
+    .subtitle {
+      text-align: center;
+      color: #666;
+      margin: 0 0 24px;
+      font-size: 14px;
+    }
 
     label {
       display: block;
-      margin: 18px 0 8px;
-      font-weight: bold;
+      font-weight: 600;
+      margin: 16px 0 8px;
     }
 
     input[type="text"] {
       width: 100%;
       padding: 13px;
-      border: 1px solid #bbb;
-      border-radius: 8px;
+      border: 1px solid #ccc;
+      border-radius: 9px;
       font-size: 16px;
     }
 
-    video, #preview {
-      display: block;
+    .camera-box {
       width: 100%;
-      margin-top: 12px;
-      border-radius: 10px;
-      background: #eee;
+      overflow: hidden;
+      border-radius: 12px;
+      background: #222;
+      aspect-ratio: 4 / 3;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-top: 8px;
+    }
+
+    video, #selfiePreview {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    #selfiePreview {
+      display: none;
     }
 
     button {
@@ -55,375 +88,311 @@
       padding: 14px;
       margin-top: 12px;
       border: 0;
-      border-radius: 8px;
-      background: #174ea6;
-      color: white;
+      border-radius: 9px;
       font-size: 16px;
-      font-weight: bold;
+      font-weight: 600;
       cursor: pointer;
     }
 
     button:disabled {
       opacity: 0.55;
-      cursor: wait;
+      cursor: not-allowed;
     }
 
-    .secondary { background: #555; }
+    .secondary {
+      background: #ececec;
+      color: #222;
+    }
+
+    .primary {
+      background: #176b45;
+      color: white;
+    }
 
     #status {
+      display: none;
+      padding: 12px;
       margin-top: 16px;
-      line-height: 1.5;
+      border-radius: 9px;
+      text-align: center;
+      font-size: 14px;
       overflow-wrap: anywhere;
     }
 
-    .note { color: #666; font-size: 13px; }
+    #status.success {
+      display: block;
+      background: #e4f5e9;
+      color: #176b45;
+    }
 
-    [hidden] { display: none !important; }
+    #status.error {
+      display: block;
+      background: #fde8e7;
+      color: #a12622;
+    }
+
+    #status.info {
+      display: block;
+      background: #e8f0fe;
+      color: #174ea6;
+    }
+
+    .small {
+      text-align: center;
+      color: #777;
+      font-size: 12px;
+      margin-top: 14px;
+    }
   </style>
 </head>
 
 <body>
   <main class="card">
     <h1>Junoon Attendance</h1>
-    <p style="text-align:center">
-      Enter your name and take a selfie.
-    </p>
+    <p class="subtitle">Enter your name and take a selfie to mark attendance.</p>
 
     <form id="attendanceForm">
-      <label for="visitorName">Full name</label>
+      <label for="personName">Enter your name</label>
       <input
-        id="visitorName"
+        id="personName"
         type="text"
-        maxlength="100"
-        placeholder="Enter your name"
-        autocomplete="off"
+        placeholder="Enter full name"
+        autocomplete="name"
         required
       >
 
-      <label>Selfie</label>
+      <label>Take a selfie</label>
+      <div class="camera-box">
+        <video id="camera" autoplay muted playsinline></video>
+        <img id="selfiePreview" alt="Captured selfie">
+      </div>
 
-      <video id="camera" autoplay playsinline muted hidden></video>
-      <img id="preview" alt="Captured selfie preview" hidden>
-
-      <button type="button" id="startCamera">Open Camera</button>
-
-      <button type="button" id="capture" hidden>
+      <button type="button" id="captureBtn" class="secondary">
         Take Selfie
       </button>
 
-      <button type="button" id="retake" class="secondary" hidden>
+      <button type="button" id="retakeBtn" class="secondary" hidden>
         Retake Selfie
       </button>
 
-      <button type="submit" id="submitButton" disabled>
+      <button type="submit" id="submitBtn" class="primary">
         Submit Attendance
       </button>
-
-      <p class="note">
-        Allow camera access when prompted. Your selfie will be saved
-        with your attendance record.
-      </p>
     </form>
 
-    <p id="status" role="status" aria-live="polite"></p>
-    <canvas id="canvas" hidden></canvas>
-
-    <iframe
-      name="submitFrame"
-      id="submitFrame"
-      title="Attendance submission"
-      hidden
-    ></iframe>
-
-    <form
-      id="uploadForm"
-      method="POST"
-      target="submitFrame"
-      hidden
-    >
-      <input name="name">
-      <textarea name="imageData"></textarea>
-    </form>
+    <div id="status" role="status" aria-live="polite"></div>
+    <p class="small">Please wait for the success message before leaving.</p>
   </main>
 
-<script>
-  const SCRIPT_URL =
-    "https://script.google.com/macros/s/AKfycbx4U9EgFUzmzZhyj71czEi_P0Unwv_g3Id_RLJWtlR1ynrjKbN4uX6ZxUCFvOpDLVt1/exec";
+  <!-- Apps Script receives the form in this hidden iframe. -->
+  <iframe
+    name="submitFrame"
+    id="submitFrame"
+    title="Attendance submission"
+    hidden>
+  </iframe>
 
-  const camera = document.getElementById("camera");
-  const preview = document.getElementById("preview");
-  const canvas = document.getElementById("canvas");
-  const statusBox = document.getElementById("status");
-  const startButton = document.getElementById("startCamera");
-  const captureButton = document.getElementById("capture");
-  const retakeButton = document.getElementById("retake");
-  const submitButton = document.getElementById("submitButton");
-  const nameInput = document.getElementById("visitorName");
-  const attendanceForm = document.getElementById("attendanceForm");
-  const uploadForm = document.getElementById("uploadForm");
-  const submitFrame = document.getElementById("submitFrame");
+  <form
+    id="backendForm"
+    method="POST"
+    target="submitFrame"
+    action="https://script.google.com/macros/s/AKfycbx4U9EgFUzmzZhyj71czEi_P0Unwv_g3Id_RLJWtlR1ynrjKbN4uX6ZxUCFvOpDLVt1/exec"
+    hidden>
+    <input type="hidden" name="name" id="backendName">
+    <input type="hidden" name="imageData" id="backendImage">
+  </form>
 
-  let stream = null;
-  let imageData = "";
-  let submitting = false;
-  let responseReceived = false;
-  let submissionTimer = null;
-  let fallbackTimer = null;
+  <script>
+    const video = document.getElementById("camera");
+    const preview = document.getElementById("selfiePreview");
+    const nameInput = document.getElementById("personName");
+    const captureBtn = document.getElementById("captureBtn");
+    const retakeBtn = document.getElementById("retakeBtn");
+    const submitBtn = document.getElementById("submitBtn");
+    const attendanceForm = document.getElementById("attendanceForm");
+    const backendForm = document.getElementById("backendForm");
+    const statusBox = document.getElementById("status");
 
-  function setStatus(message) {
-    statusBox.textContent = message;
-  }
+    let cameraStream = null;
+    let selfieData = "";
+    let isSubmitting = false;
+    let responseTimer = null;
 
-  function stopCamera() {
-    if (stream) {
-      stream.getTracks().forEach(track => track.stop());
-      stream = null;
+    function showStatus(message, type) {
+      statusBox.textContent = message;
+      statusBox.className = type;
     }
 
-    camera.srcObject = null;
-  }
-
-  async function openCamera() {
-    if (submitting) return;
-
-    stopCamera();
-    setStatus("Opening camera…");
-
-    try {
-      stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: { ideal: "user" } },
-        audio: false
-      });
-
-      camera.srcObject = stream;
-      camera.hidden = false;
-      preview.hidden = true;
-      startButton.hidden = true;
-      captureButton.hidden = false;
-      retakeButton.hidden = true;
-      submitButton.disabled = true;
-
-      setStatus("Camera ready. Take your selfie.");
-    } catch (error) {
-      camera.hidden = true;
-      startButton.hidden = false;
-
-      setStatus(
-        "Camera error: " + error.name +
-        ". Please allow camera access and try again."
-      );
-    }
-  }
-
-  function captureSelfie() {
-    if (!camera.videoWidth || !camera.videoHeight) {
-      setStatus("Camera is not ready. Please try again.");
-      return;
-    }
-
-    const maxWidth = 640;
-    const scale = Math.min(1, maxWidth / camera.videoWidth);
-
-    canvas.width = Math.round(camera.videoWidth * scale);
-    canvas.height = Math.round(camera.videoHeight * scale);
-
-    canvas.getContext("2d").drawImage(
-      camera, 0, 0, canvas.width, canvas.height
-    );
-
-    imageData = canvas.toDataURL("image/jpeg", 0.70);
-
-    preview.src = imageData;
-    preview.hidden = false;
-    camera.hidden = true;
-
-    stopCamera();
-
-    captureButton.hidden = true;
-    retakeButton.hidden = false;
-    startButton.hidden = true;
-    submitButton.disabled = false;
-
-    setStatus("Selfie captured. Check it before submitting.");
-  }
-
-  function retakeSelfie() {
-    if (submitting) return;
-
-    imageData = "";
-    preview.src = "";
-    preview.hidden = true;
-    retakeButton.hidden = true;
-    submitButton.disabled = true;
-
-    openCamera();
-  }
-
-  function resetForNextPerson() {
-    stopCamera();
-
-    attendanceForm.reset();
-    uploadForm.reset();
-
-    imageData = "";
-    preview.removeAttribute("src");
-    preview.hidden = true;
-    camera.hidden = true;
-
-    startButton.hidden = false;
-    captureButton.hidden = true;
-    retakeButton.hidden = true;
-
-    submitButton.disabled = true;
-    submitButton.textContent = "Submit Attendance";
-    submitting = false;
-
-    nameInput.focus();
-    setStatus("Ready for the next person.");
-  }
-
-  function handleBackendResult(result) {
-    if (!submitting || responseReceived) return;
-
-    responseReceived = true;
-    clearTimeout(submissionTimer);
-    clearTimeout(fallbackTimer);
-
-    if (result && result.success === true) {
-      stopCamera();
-
-      // Show the success popup before clearing the current entry.
-      window.alert("Attendance submitted successfully!");
-
-      resetForNextPerson();
-      return;
-    }
-
-    submitting = false;
-    submitButton.disabled = false;
-    submitButton.textContent = "Submit Attendance";
-
-    setStatus(
-      "Submission failed: " +
-      ((result && result.message) || "Unknown error.") +
-      " Please check the Sheet before trying again."
-    );
-  }
-
-  // Receive the backend response from the Apps Script iframe.
-  window.addEventListener("message", function(event) {
-    let hostname = "";
-
-    try {
-      hostname = new URL(event.origin).hostname;
-    } catch (_) {
-      return;
-    }
-
-    const trustedOrigin =
-      hostname === "script.google.com" ||
-      hostname.endsWith(".googleusercontent.com");
-
-    if (!trustedOrigin) return;
-
-    if (!event.data ||
-        event.data.type !== "junoon-attendance-result") {
-      return;
-    }
-
-    let result = event.data.result;
-
-    // Accept either a JSON object or a JSON string.
-    if (typeof result === "string") {
+    async function startCamera() {
       try {
-        result = JSON.parse(result);
-      } catch (_) {
-        setStatus(
-          "The server response could not be read. Check the Sheet " +
-          "before trying again to avoid duplicate entries."
+        if (!navigator.mediaDevices?.getUserMedia) {
+          throw new Error("Camera access is not supported in this browser.");
+        }
+
+        cameraStream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            facingMode: "user",
+            width: { ideal: 640 },
+            height: { ideal: 480 }
+          },
+          audio: false
+        });
+
+        video.srcObject = cameraStream;
+        await video.play();
+      } catch (error) {
+        showStatus(
+          "Unable to open the camera. Allow camera permission and reload the page.",
+          "error"
         );
-        return;
       }
     }
 
-    handleBackendResult(result);
-  });
+    function takeSelfie() {
+      if (!cameraStream || !video.videoWidth) {
+        showStatus("Camera is not ready yet. Please wait a moment.", "error");
+        return;
+      }
 
-  attendanceForm.addEventListener("submit", function(event) {
-    event.preventDefault();
+      const canvas = document.createElement("canvas");
+      const maxWidth = 640;
+      const scale = Math.min(1, maxWidth / video.videoWidth);
 
-    if (submitting) return;
+      canvas.width = Math.round(video.videoWidth * scale);
+      canvas.height = Math.round(video.videoHeight * scale);
 
-    const visitorName = nameInput.value.trim();
+      const context = canvas.getContext("2d");
+      context.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-    if (!visitorName) {
-      setStatus("Please enter your name.");
-      nameInput.focus();
-      return;
+      selfieData = canvas.toDataURL("image/jpeg", 0.75);
+
+      preview.src = selfieData;
+      preview.style.display = "block";
+      video.style.display = "none";
+
+      captureBtn.hidden = true;
+      retakeBtn.hidden = false;
+
+      showStatus("Selfie captured. You can submit your attendance.", "info");
     }
 
-    if (!imageData) {
-      setStatus("Please take a selfie first.");
-      return;
+    function retakeSelfie() {
+      selfieData = "";
+      preview.removeAttribute("src");
+      preview.style.display = "none";
+      video.style.display = "block";
+
+      captureBtn.hidden = false;
+      retakeBtn.hidden = true;
+      statusBox.className = "";
+      statusBox.textContent = "";
     }
 
-    if (!SCRIPT_URL.endsWith("/exec")) {
-      setStatus("The Apps Script URL is not configured correctly.");
-      return;
-    }
+    captureBtn.addEventListener("click", takeSelfie);
+    retakeBtn.addEventListener("click", retakeSelfie);
 
-    submitting = true;
-    responseReceived = false;
-    submitButton.disabled = true;
-    submitButton.textContent = "Submitting…";
+    attendanceForm.addEventListener("submit", function(event) {
+      event.preventDefault();
 
-    setStatus("Submitting attendance. Please wait…");
-    stopCamera();
+      if (isSubmitting) return;
 
-    uploadForm.action = SCRIPT_URL;
-    uploadForm.elements.name.value = visitorName;
-    uploadForm.elements.imageData.value = imageData;
+      const name = nameInput.value.trim();
 
-    try {
-      uploadForm.submit();
-    } catch (error) {
-      submitting = false;
-      submitButton.disabled = false;
-      submitButton.textContent = "Submit Attendance";
+      if (!name) {
+        showStatus("Please enter your name.", "error");
+        nameInput.focus();
+        return;
+      }
 
-      setStatus(
-        "Could not send the submission. Check the Sheet before retrying."
-      );
-      return;
-    }
+      if (!selfieData) {
+        showStatus("Please take a selfie before submitting.", "error");
+        return;
+      }
 
-    // If the backend response is delayed, do not assume success or failure.
-    submissionTimer = setTimeout(function() {
-      if (!submitting || responseReceived) return;
+      isSubmitting = true;
+      submitBtn.disabled = true;
+      captureBtn.disabled = true;
+      retakeBtn.disabled = true;
 
-      setStatus(
-        "No confirmation received yet. Check the attendance Sheet " +
-        "before retrying, to avoid duplicate entries."
-      );
+      showStatus("Submitting attendance. Please wait...", "info");
 
-      submitButton.disabled = true;
-      submitButton.textContent = "Waiting for confirmation…";
-    }, 30000);
+      document.getElementById("backendName").value = name;
+      document.getElementById("backendImage").value = selfieData;
 
-    // Keep the form locked until a response arrives or the page is reloaded.
-    fallbackTimer = setTimeout(function() {
-      if (!submitting || responseReceived) return;
+      // The backend response will notify this page through postMessage.
+      responseTimer = setTimeout(function() {
+        if (isSubmitting) {
+          isSubmitting = false;
+          submitBtn.disabled = false;
+          captureBtn.disabled = false;
+          retakeBtn.disabled = false;
 
-      setStatus(
-        "Confirmation is still unavailable. Please ask the administrator " +
-        "to check the Sheet. Do not submit again until verified."
-      );
-    }, 60000);
-  });
+          showStatus(
+            "No confirmation received. Check the attendance sheet before retrying to avoid duplicate entries.",
+            "error"
+          );
+        }
+      }, 30000);
 
-  window.addEventListener("pagehide", stopCamera);
+      backendForm.submit();
+    });
 
-  nameInput.focus();
-</script>
+    window.addEventListener("message", function(event) {
+      // Accept messages only from the response iframe used for submission.
+      if (event.source !== document.getElementById("submitFrame").contentWindow) {
+        return;
+      }
+
+      const data = event.data;
+
+      if (!data || data.type !== "junoon-attendance-result") {
+        return;
+      }
+
+      let result = data.result;
+
+      if (typeof result === "string") {
+        try {
+          result = JSON.parse(result);
+        } catch (error) {
+          showStatus("Received an unreadable response. Check the attendance sheet.", "error");
+          return;
+        }
+      }
+
+      if (!result || typeof result.success !== "boolean") return;
+
+      clearTimeout(responseTimer);
+      isSubmitting = false;
+
+      submitBtn.disabled = false;
+      captureBtn.disabled = false;
+      retakeBtn.disabled = false;
+
+      if (result.success) {
+        showStatus("Attendance submitted successfully!", "success");
+
+        // Clear the previous person's details and selfie.
+        nameInput.value = "";
+        selfieData = "";
+        preview.removeAttribute("src");
+        preview.style.display = "none";
+        video.style.display = "block";
+
+        captureBtn.hidden = false;
+        retakeBtn.hidden = true;
+
+        // Keep the camera stream open for the next person.
+        nameInput.focus();
+      } else {
+        showStatus(
+          result.message || "Submission failed. Please try again.",
+          "error"
+        );
+      }
+    });
+
+    startCamera();
+  </script>
 </body>
 </html>
